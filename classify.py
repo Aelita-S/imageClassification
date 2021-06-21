@@ -20,6 +20,19 @@ from sklearn.linear_model import LogisticRegression
 data_dir = Path(__file__).resolve(strict=True).parent / "fashion-mnist" / "data" / "fashion"
 
 
+def timer(func):
+    def deco(*args, **kwargs):
+        print(f'\n函数 {func.__name__} 开始运行：')
+        start_time = time.time()
+
+        res = func(*args, **kwargs)
+        end_time = time.time()
+        print(f'函数 {func.__name__} 运行了 {round(end_time - start_time, 3)}秒')
+        return res
+
+    return deco
+
+
 class Classifier:
     def __init__(self, train_data, train_target_data, algorithm, **kwargs):
         """训练
@@ -28,14 +41,24 @@ class Classifier:
         :param train_target_data: 训练集分类
         :param algorithm: 训练算法
         """
+        self.train_data = train_data
+        self.train_target_data = train_target_data
 
         self.clf = algorithm(**kwargs)
-        self.clf.fit(train_data, train_target_data)
-        train_predicted_data_proba = self.clf.predict_proba(train_data)
+        self.train()
+        self.train_predict()
 
-        print("训练集top1准确率: ", get_topk(target=train_target_data, data_set=train_predicted_data_proba, k=1))
-        print("训练集top2准确率: ", get_topk(target=train_target_data, data_set=train_predicted_data_proba, k=2))
+    @timer
+    def train(self):
+        self.clf.fit(self.train_data, self.train_target_data)
 
+    @timer
+    def train_predict(self):
+        train_predicted_data_proba = self.clf.predict_proba(self.train_data)
+        print("训练集top1准确率: ", get_topk(target=self.train_target_data, data_set=train_predicted_data_proba, k=1))
+        print("训练集top2准确率: ", get_topk(target=self.train_target_data, data_set=train_predicted_data_proba, k=2))
+
+    @timer
     def classify(self, test_data, test_target_data):
         """测试
 
@@ -69,44 +92,28 @@ def get_data(kind):
     return images, labels
 
 
-def timmer(func):
-    def deco(*args, **kwargs):
-        print(f'\n函数：{func.__name__}开始运行：')
-        start_time = time.time()
-
-        res = func(*args, **kwargs)
-        end_time = time.time()
-        print(f'函数:{func.__name__}运行了 {end_time - start_time}秒')
-
-        return res
-
-    return deco
-
-
 train_images, train_labels = get_data('train')
 
 test_images, test_labels = get_data('t10k')
 
-MODE = 'DEV'
+MODE = ''
 
-
-@timmer
 def run(classification):
+    print("算法：", classification['algorithm'].__name__)
     run_train_images = train_images
     run_train_labels = train_labels
     if MODE == 'DEV':
         run_train_images = run_train_images[0: 500]
         run_train_labels = run_train_labels[0: 500]
 
-    args = ()
-    if classification == 'KNN':
-        args = {'algorithm': KNeighborsClassifier, 'n_neighbors': 10}
-    elif classification == 'SVC':
-        args = {'algorithm': SVC, 'probability': True}
-
-    clf = Classifier(run_train_images, run_train_labels, **args)
-    print("SVC", clf.classify(test_images, test_labels))
+    clf = Classifier(train_data=run_train_images, train_target_data=run_train_labels, **classification)
+    print(clf.classify(test_images, test_labels))
 
 
 if __name__ == '__main__':
-    run(classification='SVC')
+    algorithms = {
+        "SVC": {'algorithm': SVC, 'probability': True},
+        "KNN": {'algorithm': KNeighborsClassifier, 'n_neighbors': 10, 'n_jobs': 8}
+    }
+
+    run(algorithms['KNN'])
