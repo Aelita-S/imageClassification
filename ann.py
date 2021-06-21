@@ -1,13 +1,9 @@
 import tensorflow as tf
 from tensorflow import keras
+
+from classify import get_data, get_topk
+
 # import other library
-import os
-import gzip
-import numpy as np
-import matplotlib.pyplot as plt
-
-from classify import get_data
-
 
 # load train data
 train_images, train_labels = get_data(kind='train')
@@ -30,8 +26,10 @@ model = keras.Sequential([
 
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-model.fit(train_images, train_labels, epochs=20)
+model.fit(train_images, train_labels, epochs=5)
 
-test_loss, test_acc = model.evaluate(test_images, test_labels)
+predicted_data_proba = model.predict(test_images)
+top1 = get_topk(target=test_labels, data_set=predicted_data_proba, k=1)
+top2 = get_topk(target=test_labels, data_set=predicted_data_proba, k=2)
 
-print('Test accuracy:', test_acc)
+print(top1, top2)
