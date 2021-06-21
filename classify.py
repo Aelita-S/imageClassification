@@ -1,4 +1,6 @@
 import gzip
+from collections import Counter
+
 import numpy as np
 from pathlib import Path
 
@@ -8,6 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, recall_score, f1_score, confusion_matrix
 import heapq
 
+from keras.metrics import sparse_top_k_categorical_accuracy
 
 from random import randint
 import matplotlib.pyplot as plt
@@ -51,13 +54,8 @@ class Classifier:
 
 
 def get_top2(data_set, target):
-    acc_num = 0
-    for index, data in enumerate(data_set):
-        top2 = heapq.nlargest(2, data)
-        res_set = [inx for inx, possibility in enumerate(data) if possibility in top2]
-        if target[index] in res_set:
-            acc_num += 1
-    return acc_num / len(target)
+    return np.count_nonzero(sparse_top_k_categorical_accuracy(target, data_set, k=2)) / len(target)
+
 
 def get_data(kind):
     labels_path, images_path = data_dir / f'{kind}-labels-idx1-ubyte.gz', data_dir / f'{kind}-images-idx3-ubyte.gz'
@@ -75,6 +73,11 @@ train_images, train_labels = get_data('train')
 
 test_images, test_labels = get_data('t10k')
 
+MODE = 'DEV'
+
 if __name__ == '__main__':
-    clf = Classifier(train_images[0: 1000], train_labels[0: 1000], SVC, probability=True)
+    if MODE == 'DEV':
+        clf = Classifier(train_images[0: 1000], train_labels[0: 1000], SVC, probability=True)
+    else:
+        clf = Classifier(train_images, train_labels, SVC, probability=True)
     print("SVC", clf.classify(test_images, test_labels))
