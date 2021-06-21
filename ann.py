@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
-from classify import get_data, get_topk
+from classify import get_data, get_topk, timer
 
 # import other library
 
@@ -26,10 +26,17 @@ model = keras.Sequential([
 
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-model.fit(train_images, train_labels, epochs=5)
 
-predicted_data_proba = model.predict(test_images)
-top1 = get_topk(target=test_labels, data_set=predicted_data_proba, k=1)
-top2 = get_topk(target=test_labels, data_set=predicted_data_proba, k=2)
+@timer
+def run_fit(epochs=5):
+    model.fit(train_images, train_labels, epochs=epochs)
 
-print(top1, top2)
+    predicted_data_proba = model.predict(test_images)
+    top1 = get_topk(target=test_labels, data_set=predicted_data_proba, k=1)
+    top2 = get_topk(target=test_labels, data_set=predicted_data_proba, k=2)
+
+    print(top1, top2)
+
+
+if __name__ == '__main__':
+    run_fit(100)
