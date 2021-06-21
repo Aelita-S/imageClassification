@@ -1,9 +1,13 @@
 import gzip
 import numpy as np
 from pathlib import Path
+
+from sklearn.base import ClassifierMixin
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, recall_score, f1_score, confusion_matrix
+import heapq
+
 
 from random import randint
 import matplotlib.pyplot as plt
@@ -24,9 +28,11 @@ class Classifier:
         :param train_target_data: 训练集分类
         :param algorithm: 训练算法
         """
+
         self.clf = algorithm(**kwargs)
         self.clf.fit(train_data, train_target_data)
         print("训练集准确率: ", accuracy_score(train_target_data, self.clf.predict(train_data)))
+        print("训练集top2准确率: ", get_top2(self.clf.predict_proba(train_data), train_target_data))
 
     def classify(self, test_data, test_target_data):
         """测试
@@ -37,11 +43,21 @@ class Classifier:
         """
         predicted_data = self.clf.predict(test_data)
         accuracy = accuracy_score(test_target_data, predicted_data)
+        top2 = get_top2(self.clf.predict_proba(test_data), test_target_data)
         recall = recall_score(test_target_data, predicted_data, average='macro')
         f1 = f1_score(test_target_data, predicted_data, average='macro')
         confusion_mat = confusion_matrix(test_target_data, predicted_data)
-        return accuracy, recall, f1, confusion_mat
+        return accuracy, top2, recall, f1, confusion_mat
 
+
+def get_top2(data_set, target):
+    acc_num = 0
+    for index, data in enumerate(data_set):
+        top2 = heapq.nlargest(2, data)
+        res_set = [inx for inx, possibility in enumerate(data) if possibility in top2]
+        if target[index] in res_set:
+            acc_num += 1
+    return acc_num / len(target)
 
 def get_data(kind):
     labels_path, images_path = data_dir / f'{kind}-labels-idx1-ubyte.gz', data_dir / f'{kind}-images-idx3-ubyte.gz'
@@ -60,5 +76,5 @@ train_images, train_labels = get_data('train')
 test_images, test_labels = get_data('t10k')
 
 if __name__ == '__main__':
-    clf = Classifier(train_images, train_labels, SVC)
+    clf = Classifier(train_images[0: 1000], train_labels[0: 1000], SVC, probability=True)
     print("SVC", clf.classify(test_images, test_labels))
