@@ -1,4 +1,5 @@
 import gzip
+import time
 
 import numpy as np
 from pathlib import Path
@@ -6,8 +7,6 @@ from pathlib import Path
 from sklearn.base import ClassifierMixin
 
 from sklearn.metrics import recall_score, f1_score, confusion_matrix
-import heapq
-
 from keras.metrics import sparse_top_k_categorical_accuracy
 
 from random import randint
@@ -70,15 +69,44 @@ def get_data(kind):
     return images, labels
 
 
+def timmer(func):
+    def deco(*args, **kwargs):
+        print(f'\n函数：{func.__name__}开始运行：')
+        start_time = time.time()
+
+        res = func(*args, **kwargs)
+        end_time = time.time()
+        print(f'函数:{func.__name__}运行了 {end_time - start_time}秒')
+
+        return res
+
+    return deco
+
+
 train_images, train_labels = get_data('train')
 
 test_images, test_labels = get_data('t10k')
 
 MODE = 'DEV'
 
-if __name__ == '__main__':
+
+@timmer
+def run(classification):
+    run_train_images = train_images
+    run_train_labels = train_labels
     if MODE == 'DEV':
-        clf = Classifier(train_images[0: 1000], train_labels[0: 1000], SVC, probability=True)
-    else:
-        clf = Classifier(train_images, train_labels, SVC, probability=True)
+        run_train_images = run_train_images[0: 500]
+        run_train_labels = run_train_labels[0: 500]
+
+    args = ()
+    if classification == 'KNN':
+        args = {'algorithm': KNeighborsClassifier, 'n_neighbors': 10}
+    elif classification == 'SVC':
+        args = {'algorithm': SVC, 'probability': True}
+
+    clf = Classifier(run_train_images, run_train_labels, **args)
     print("SVC", clf.classify(test_images, test_labels))
+
+
+if __name__ == '__main__':
+    run(classification='SVC')
