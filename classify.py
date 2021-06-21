@@ -1,13 +1,11 @@
 import gzip
-from collections import Counter
 
 import numpy as np
 from pathlib import Path
 
 from sklearn.base import ClassifierMixin
-from sklearn.datasets import fetch_olivetti_faces
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, recall_score, f1_score, confusion_matrix
+
+from sklearn.metrics import recall_score, f1_score, confusion_matrix
 import heapq
 
 from keras.metrics import sparse_top_k_categorical_accuracy
@@ -34,27 +32,30 @@ class Classifier:
 
         self.clf = algorithm(**kwargs)
         self.clf.fit(train_data, train_target_data)
-        print("训练集准确率: ", accuracy_score(train_target_data, self.clf.predict(train_data)))
-        print("训练集top2准确率: ", get_top2(self.clf.predict_proba(train_data), train_target_data))
+        train_predicted_data_proba = self.clf.predict_proba(train_data)
+
+        print("训练集top1准确率: ", get_topk(target=train_target_data, data_set=train_predicted_data_proba, k=1))
+        print("训练集top2准确率: ", get_topk(target=train_target_data, data_set=train_predicted_data_proba, k=2))
 
     def classify(self, test_data, test_target_data):
         """测试
 
         :param test_data: 测试集数据
         :param test_target_data: 测试集分类
-        :return: 训练集准确率、召回率、F1 Score、混淆矩阵
+        :return: 训练集Top1准确率、Top2准确率、召回率、F1 Score、混淆矩阵
         """
-        predicted_data = self.clf.predict(test_data)
-        accuracy = accuracy_score(test_target_data, predicted_data)
-        top2 = get_top2(self.clf.predict_proba(test_data), test_target_data)
-        recall = recall_score(test_target_data, predicted_data, average='macro')
-        f1 = f1_score(test_target_data, predicted_data, average='macro')
-        confusion_mat = confusion_matrix(test_target_data, predicted_data)
-        return accuracy, top2, recall, f1, confusion_mat
+        predicted_target = self.clf.predict(test_data)
+        predicted_data_proba = self.clf.predict_proba(test_data)
+        top1 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=1)
+        top2 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=2)
+        recall = recall_score(test_target_data, predicted_target, average='macro')
+        f1 = f1_score(test_target_data, predicted_target, average='macro')
+        confusion_mat = confusion_matrix(test_target_data, predicted_target)
+        return (top1, top2), recall, f1, confusion_mat
 
 
-def get_top2(data_set, target):
-    return np.count_nonzero(sparse_top_k_categorical_accuracy(target, data_set, k=2)) / len(target)
+def get_topk(target, data_set, k=2):
+    return np.count_nonzero(sparse_top_k_categorical_accuracy(target, data_set, k=k)) / len(target)
 
 
 def get_data(kind):
