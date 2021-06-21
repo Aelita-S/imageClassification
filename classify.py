@@ -1,5 +1,8 @@
 import gzip
 import time
+import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import numpy as np
 from pathlib import Path
@@ -46,7 +49,7 @@ class Classifier:
 
         self.clf = algorithm(**kwargs)
         self.train()
-        self.train_predict()
+        # self.train_predict()
 
     @timer
     def train(self):
@@ -97,6 +100,7 @@ train_images, train_labels = get_data('train')
 test_images, test_labels = get_data('t10k')
 
 MODE = ''
+
 
 def run(classification):
     print("算法：", classification['algorithm'].__name__)
