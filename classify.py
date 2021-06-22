@@ -85,6 +85,9 @@ class Classifier:
 
         top1 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=1)
         top2 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=2)
+        print("测试集top1准确率: ", top1)
+        print("测试集top2准确率: ", top2)
+
         return top1, top2
 
 
@@ -126,8 +129,9 @@ def run(classification):
 
 if __name__ == '__main__':
     algorithms = {
-        "SVC": dict(algorithm=SVC, probability=True, C=10, kernel="linear"),
-        "KNN": dict(algorithm=KNeighborsClassifier, n_neighbors=10, n_jobs=8)
+        "SVC": dict(algorithm=SVC, C=10, probability=True, verbose=True),
+        "KNN": dict(algorithm=KNeighborsClassifier, n_neighbors=10, n_jobs=8),
+        "GNB": dict(algorithm=GaussianNB)
     }
 
     run(algorithms['KNN'])

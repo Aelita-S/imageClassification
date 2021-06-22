@@ -2,6 +2,7 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 from tensorflow import keras
 
+from charts import line
 from classify import Classifier, get_data, get_topk, timer, run
 
 # import other library
@@ -29,14 +30,9 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 
 if __name__ == '__main__':
     clf = Classifier(train_labels, train_images, algorithm=model, is_object=True)
-    train_history = clf.train(epochs=10)
+    train_history = clf.train(epochs=150)
     clf.train_predict(probability=False)
     clf.predict(test_labels, test_images, probability=False)
 
     # 绘制训练 & 验证的准确率值
-    plt.plot(train_history.history['accuracy'])
-    plt.title('Model accuracy')
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend('Train', loc='upper left')
-    plt.show()
+    line(train_history.history['accuracy'], None, title='Model accuracy', ylabel='Accuracy', xlabel='Epoch', legend='Train')
