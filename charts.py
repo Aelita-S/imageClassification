@@ -11,7 +11,7 @@ def line(yAxis, xAxis, title="", ylabel="", xlabel="", legend=""):
 
 
 def bar(yxAis, xAxis, title="", ylabel="", xlabel="", legend=""):
-    plt.bar(yxAis, height=xAxis)
+    plt.bar(xAxis, height=yxAis)
     plt.title(title)
     plt.ylabel(ylabel)
     plt.xlabel(xlabel)
