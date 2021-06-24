@@ -55,6 +55,8 @@ class Classifier:
         self.train_target_data = train_target_data
         self.train_data = train_data
 
+        self.name = kwargs.pop('name')
+
         if is_object:
             self.clf = algorithm
         else:
@@ -95,6 +97,11 @@ class Classifier:
 
         top1 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=1)
         top2 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=2)
+
+        cm = confusion_matrix(test_target_data, predicted_data_proba)
+
+        plot_confusion_matrix(cm, title=self.name)
+
         print("测试集top1准确率: ", top1)
         print("测试集top2准确率: ", top2)
 
@@ -173,9 +180,9 @@ def run(classification, train_set, test_set):
 
 if __name__ == '__main__':
     algorithms = {
-        "SVC": dict(algorithm=SVC, C=10, probability=True, verbose=True),
-        "KNN": dict(algorithm=KNeighborsClassifier, n_neighbors=10, n_jobs=8),
-        "GNB": dict(algorithm=GaussianNB)
+        "SVC": dict(algorithm=SVC, C=10, probability=True, verbose=True, name='SVC'),
+        "KNN": dict(algorithm=KNeighborsClassifier, n_neighbors=10, n_jobs=8, name='KNN'),
+        "GNB": dict(algorithm=GaussianNB, name='GNB')
     }
     # res = run(algorithms['KNN'], pca.transform(train_images), pca.transform(test_images))
 

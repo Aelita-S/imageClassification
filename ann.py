@@ -25,7 +25,7 @@ model = keras.Sequential([
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 if __name__ == '__main__':
-    clf = Classifier(train_labels, train_images, algorithm=model, is_object=True)
+    clf = Classifier(train_labels, train_images, algorithm=model, is_object=True, name='ANN')
     train_history = clf.train(epochs=20)
     clf.train_predict(probability=False)
     clf.predict(test_labels, test_images, probability=False)
