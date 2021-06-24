@@ -20,14 +20,9 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
+from skimage import feature
 
 data_dir = Path(__file__).resolve(strict=True).parent / "fashion-mnist" / "data" / "fashion"
-
-
-def get_pca(data: np.ndarray, n=2) -> PCA:
-    pca = PCA(n_components=n)
-    pca.fit(data)  # 训练PCA模型
-    return pca
 
 
 def timer(func):
@@ -41,6 +36,29 @@ def timer(func):
         return res, cost
 
     return deco
+
+
+def lbp_texture(data: np.ndarray):
+    """LBP特征提取"""
+    radius = 1
+    n_point = radius * 8
+    images = data.reshape(-1, 28, 28)
+
+    data_hist = np.zeros((len(images), 256))
+    for idx, img in enumerate(images):
+        # 使用skimage LBP方法提取图像的纹理特征
+        lbp = feature.local_binary_pattern(img, n_point, radius)
+        # hist size:256
+        max_bins = int(lbp.max()) + 1
+        data_hist[idx], _ = np.histogram(lbp, bins=max_bins, range=(0, max_bins))
+
+    return data_hist
+
+
+def get_pca(data: np.ndarray, n=2) -> PCA:
+    pca = PCA(n_components=n)
+    pca.fit(data)  # 训练PCA模型
+    return pca
 
 
 class Classifier:
@@ -98,7 +116,7 @@ class Classifier:
         top1 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=1)
         top2 = get_topk(target=test_target_data, data_set=predicted_data_proba, k=2)
 
-        cm = confusion_matrix(test_target_data, predicted_data_proba)
+        cm = confusion_matrix(test_target_data, self.clf.predict(test_data))
 
         plot_confusion_matrix(cm, title=self.name)
 
@@ -175,26 +193,39 @@ def run(classification, train_set, test_set):
     clf.train()
     res = clf.predict(test_labels, test_set)
     print(res)
+    print("\n\n")
     return res
 
 
 if __name__ == '__main__':
     algorithms = {
-        "SVC": dict(algorithm=SVC, C=10, probability=True, verbose=True, name='SVC'),
+        # "SVC": dict(algorithm=SVC, C=10, probability=True, name='SVC'),
         "KNN": dict(algorithm=KNeighborsClassifier, n_neighbors=10, n_jobs=8, name='KNN'),
         "GNB": dict(algorithm=GaussianNB, name='GNB')
     }
-    # res = run(algorithms['KNN'], pca.transform(train_images), pca.transform(test_images))
-
-    top1_scores = []
-    cost = []
-    for i in range(1, 16):
-        print("PCA维数：", i)
-        pca = get_pca(train_images, i)
-
-        res = run(algorithms['KNN'], pca.transform(train_images), pca.transform(test_images))
-        top1_scores.append(res[0][0])
-        cost.append(res[1])
+    # print("PCA维数：", 15)
+    # pca = get_pca(train_images, 15)
+    # X_train, X_test = pca.transform(train_images), pca.transform(test_images)
+    X_train, X_test = lbp_texture(train_images), lbp_texture(test_images)
+    for a in algorithms.values():
+        run(a, X_train, X_test)
         print()
-    line(top1_scores, list(range(1, 16)), title="Accuracy", ylabel="accuracy", xlabel="n_components")
-    line(cost, list(range(1, 16)), title="Time cost", ylabel="s", xlabel="n_components")
+        run(a, train_images, test_images)
+
+    # top1_scores = []
+    # cost = []
+    # for i in range(1, 16):
+    #     print("PCA维数：", i)
+    #     pca = get_pca(train_images, i)
+    #
+    #     res = run(algorithms['KNN'], pca.transform(train_images), pca.transform(test_images))
+    #     top1_scores.append(res[0][0])
+    #     cost.append(res[1])
+    #     print()
+    # res = run(algorithms['KNN'], train_images, test_images)
+    # top1_scores.append(res[0][0])
+    # cost.append(res[1])
+    # ax = list(range(1, 16))
+    # ax.append("784")
+    # line(top1_scores, ax, title="Accuracy", ylabel="accuracy", xlabel="n_components")
+    # line(cost, ax, title="Time cost", ylabel="s", xlabel="n_components")

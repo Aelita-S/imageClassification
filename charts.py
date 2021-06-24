@@ -25,9 +25,11 @@ def bar(yxAis, xAxis, title="", ylabel="", xlabel=""):
 
 
 if __name__ == '__main__':
-    classification = ["SVC", "KNN(8 jobs)", "GNB", "ANN(20 Epochs)"]
-    bar([0.9011, 0.8629, 0.5856, 0.8863], classification, title="Top1 accuracy", ylabel="accuracy", xlabel="class")  # Top1
-    bar([0.9725, 0.9643, 0.9456, 0.9678], classification, title="Top2 accuracy", ylabel="accuracy", xlabel="class")  # Top2
-    bar([1208, 0.003, 0.514, 75.125], classification, title="Time cost(Training)", ylabel="s", xlabel="class")  # 训练时间
-    bar([101, 19.587, 0.705, 0.406], classification, title="Time cost(Test)", ylabel="s", xlabel="class")  # 测试集分类时间
+    # classification = ["SVC", "KNN(8 jobs)", "GNB", "ANN(20 Epochs)"]
+    # bar([0.9011, 0.8629, 0.5856, 0.8863], classification, title="Top1 accuracy", ylabel="accuracy", xlabel="class")  # Top1
+    # bar([0.9725, 0.9643, 0.9456, 0.9678], classification, title="Top2 accuracy", ylabel="accuracy", xlabel="class")  # Top2
+    # bar([1208, 0.003, 0.514, 75.125], classification, title="Time cost(Training)", ylabel="s", xlabel="class")  # 训练时间
+    # bar([101, 19.587, 0.705, 0.406], classification, title="Time cost(Test)", ylabel="s", xlabel="class")  # 测试集分类时间
 
+    classifications = ["KNN", "KNN(LBP)", "GNB", "GNB(LBP)"]
+    bar([0.8629, 0.7405, 0.5856, 0.5862], classifications, title="Top1 accuracy", ylabel="accuracy", xlabel="class")  # Top1
