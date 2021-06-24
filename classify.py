@@ -2,6 +2,10 @@ import gzip
 import time
 import os
 
+from sklearn.decomposition import PCA
+
+from charts import line
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import numpy as np
@@ -20,15 +24,21 @@ from sklearn.linear_model import LogisticRegression
 data_dir = Path(__file__).resolve(strict=True).parent / "fashion-mnist" / "data" / "fashion"
 
 
+def get_pca(data: np.ndarray, n=2) -> PCA:
+    pca = PCA(n_components=n)
+    pca.fit(data)  # 训练PCA模型
+    return pca
+
+
 def timer(func):
     def deco(*args, **kwargs):
         print(f'\n函数 {func.__name__} 开始运行：')
         start_time = time.time()
 
         res = func(*args, **kwargs)
-        end_time = time.time()
-        print(f'函数 {func.__name__} 运行了 {round(end_time - start_time, 3)}秒')
-        return res
+        cost = round(time.time() - start_time, 3)
+        print(f'函数 {func.__name__} 运行了 {cost} 秒')
+        return res, cost
 
     return deco
 
@@ -146,9 +156,9 @@ def plot_confusion_matrix(cm, title='Confusion Matrix'):
     plt.show()
 
 
-def run(classification):
+def run(classification, train_set, test_set):
     print("算法：", classification['algorithm'].__name__)
-    run_train_images = train_images
+    run_train_images = train_set
     run_train_labels = train_labels
     if MODE == 'DEV':
         run_train_images = run_train_images[0: 500]
@@ -156,7 +166,9 @@ def run(classification):
 
     clf = Classifier(train_target_data=run_train_labels, train_data=run_train_images, **classification)
     clf.train()
-    print(clf.predict(test_labels, test_images))
+    res = clf.predict(test_labels, test_set)
+    print(res)
+    return res
 
 
 if __name__ == '__main__':
@@ -165,5 +177,17 @@ if __name__ == '__main__':
         "KNN": dict(algorithm=KNeighborsClassifier, n_neighbors=10, n_jobs=8),
         "GNB": dict(algorithm=GaussianNB)
     }
+    # res = run(algorithms['KNN'], pca.transform(train_images), pca.transform(test_images))
 
-    run(algorithms['KNN'])
+    top1_scores = []
+    cost = []
+    for i in range(1, 16):
+        print("PCA维数：", i)
+        pca = get_pca(train_images, i)
+
+        res = run(algorithms['KNN'], pca.transform(train_images), pca.transform(test_images))
+        top1_scores.append(res[0][0])
+        cost.append(res[1])
+        print()
+    line(top1_scores, list(range(1, 16)), title="Accuracy", ylabel="accuracy", xlabel="n_components")
+    line(cost, list(range(1, 16)), title="Time cost", ylabel="s", xlabel="n_components")

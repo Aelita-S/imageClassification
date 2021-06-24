@@ -15,11 +15,7 @@ test_images, test_labels = get_data(kind='t10k')
 train_images = train_images / 255.0
 test_images = test_images / 255.0
 
-train_images = train_images.reshape(-1, 28, 28)
-test_images = test_images.reshape(-1, 28, 28)
-
 model = keras.Sequential([
-    keras.layers.Flatten(input_shape=(28, 28)),
     keras.layers.Dense(512, activation=tf.nn.relu),
     keras.layers.Dense(256, activation=tf.nn.relu),
     keras.layers.Dense(128, activation=tf.nn.relu),
@@ -30,7 +26,7 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 
 if __name__ == '__main__':
     clf = Classifier(train_labels, train_images, algorithm=model, is_object=True)
-    train_history = clf.train(epochs=150)
+    train_history = clf.train(epochs=20)
     clf.train_predict(probability=False)
     clf.predict(test_labels, test_images, probability=False)
 
